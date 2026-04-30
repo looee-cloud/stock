@@ -10,7 +10,10 @@
         body { font-family: 'Noto Sans TC', sans-serif; }
         .low-stock-pulse { animation: pulse 2s infinite; border: 2px solid #ff4d4d; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); } }
-        optgroup { font-weight: bold; color: #475569; background: #f1f5f9; }
+        /* 強化選單分類文字顏色 */
+        .opt-kids { color: #a16207; font-weight: bold; background: #fefce8; }
+        .opt-women { color: #db2777; font-weight: bold; background: #fdf2f8; }
+        .opt-unisex { color: #2563eb; font-weight: bold; background: #eff6ff; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-24 text-slate-800">
@@ -84,7 +87,7 @@
                 <div>
                     <label class="text-[10px] font-bold text-slate-400">尺寸標籤</label>
                     <select id="inSize" class="w-full bg-slate-50 border-0 rounded-xl p-3 outline-none mt-1">
-                        <optgroup label="黃底：兒童版">
+                        <optgroup label="兒童版" class="opt-kids">
                             <option value="90CM">90CM</option>
                             <option value="100CM">100CM</option>
                             <option value="110CM">110CM</option>
@@ -94,14 +97,14 @@
                             <option value="150CM">150CM</option>
                             <option value="160CM">160CM</option>
                         </optgroup>
-                        <optgroup label="粉底：女版">
+                        <optgroup label="女版" class="opt-women">
                             <option value="GS">GS</option>
                             <option value="GM">GM</option>
                             <option value="GL">GL</option>
                             <option value="GXL">GXL</option>
                             <option value="GXXL">GXXL</option>
                         </optgroup>
-                        <optgroup label="藍底：一般款">
+                        <optgroup label="一般款" class="opt-unisex">
                             <option value="XS">XS</option>
                             <option value="S">S</option>
                             <option value="M">M</option>
