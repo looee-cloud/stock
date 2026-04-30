@@ -8,9 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; }
-        .low-stock-pulse { animation: pulse 2s infinite; border: 2px solid #ff4d4d; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); } }
-        /* 強化選單分類文字顏色 */
+        /* 數量 3 件以下觸發紅色呼吸燈 */
+        .low-stock-pulse { animation: pulse 2s infinite; border: 2px solid #ef4444; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        /* 尺寸分類顏色標籤 */
         .opt-kids { color: #a16207; font-weight: bold; background: #fefce8; }
         .opt-women { color: #db2777; font-weight: bold; background: #fdf2f8; }
         .opt-unisex { color: #2563eb; font-weight: bold; background: #eff6ff; }
@@ -24,116 +25,73 @@
                 <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-bold">鹿</div>
                 <span class="font-bold tracking-widest text-lg">鹿意文創 <span class="text-slate-400 font-light text-sm">| 庫存系統</span></span>
             </div>
-            <button onclick="toggleAddModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md">＋ 新增入庫</button>
+            <button onclick="toggleAddModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md transition active:scale-95">＋ 新增入庫</button>
         </div>
         <div id="brandTabs" class="max-w-4xl mx-auto px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide"></div>
     </nav>
 
     <main class="max-w-4xl mx-auto p-4">
+        <!-- 🔴 補貨提醒專區：門檻改為 <= 3 -->
+        <div id="restockSection" class="hidden mb-8">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                <h2 class="text-red-600 font-bold tracking-wide">優先補貨清單 (常備款 <= 3)</h2>
+            </div>
+            <div id="restockContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+            <hr class="mt-8 border-slate-200">
+        </div>
+
+        <div class="mb-3 flex justify-between items-center px-1">
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest">目前所有庫存</h2>
+            <span id="stockCount" class="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-mono">0 Items</span>
+        </div>
         <div id="inventoryContainer" class="space-y-3">
             <div id="loadingMsg" class="text-center py-20 text-slate-400">正在連線雲端資料庫...</div>
         </div>
     </main>
 
+    <!-- 新增品項 Modal -->
     <div id="addModal" class="fixed inset-0 bg-slate-900/50 z-40 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6 overflow-hidden">
-            <h2 class="text-lg font-bold mb-4">📦 商品入庫</h2>
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6 overflow-hidden animate-in fade-in zoom-in duration-200">
+            <h2 class="text-lg font-bold mb-4 text-slate-800">📦 商品入庫</h2>
             <div class="grid grid-cols-2 gap-4 mb-6 max-h-[60vh] overflow-y-auto pr-2">
-                
                 <div class="col-span-2">
-                    <label class="text-[10px] font-bold text-slate-400">品牌標籤</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">品牌標籤</label>
                     <select id="inBrand" class="w-full bg-slate-50 border-0 rounded-xl p-3 outline-none mt-1">
-                        <option value="Gildan">Gildan</option>
-                        <option value="Printstar">Printstar</option>
-                        <option value="United Athle">United Athle</option>
-                        <option value="Champion">Champion</option>
-                        <option value="Arrive Guide">Arrive Guide</option>
-                        <option value="SORONA">SORONA</option>
-                        <option value="Uatra Apparel">Uatra Apparel</option>
-                        <option value="North Harbour">North Harbour</option>
-                        <option value="POLONE1">POLONE1</option>
-                        <option value="Top Hoodie">Top Hoodie</option>
+                        <option value="Gildan">Gildan</option><option value="Printstar">Printstar</option><option value="United Athle">United Athle</option><option value="Champion">Champion</option><option value="Arrive Guide">Arrive Guide</option><option value="SORONA">SORONA</option><option value="Uatra Apparel">Uatra Apparel</option><option value="North Harbour">North Harbour</option><option value="POLONE1">POLONE1</option><option value="Top Hoodie">Top Hoodie</option>
                     </select>
                 </div>
-
                 <div class="col-span-2">
-                    <label class="text-[10px] font-bold text-slate-400">商品型號 (例如: UA35001)</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">商品型號 (例如: UA35001)</label>
                     <input id="inModel" type="text" placeholder="輸入型號" class="w-full bg-slate-50 border-0 rounded-xl p-3 outline-none mt-1">
                 </div>
-                
                 <div class="col-span-2">
-                    <label class="text-[10px] font-bold text-slate-400">品項分類</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">品項分類</label>
                     <select id="inType" class="w-full bg-slate-50 border-0 rounded-xl p-3 outline-none mt-1">
-                        <option value="棉質短T">棉質短T</option>
-                        <option value="重磅短T">重磅短T</option>
-                        <option value="排汗短T">排汗短T</option>
-                        <option value="其他短T">其他短T</option>
-                        <option value="短袖POLO衫">短袖POLO衫</option>
-                        <option value="長袖POLO衫">長袖POLO衫</option>
-                        <option value="大學T">大學T</option>
-                        <option value="帽T">帽T</option>
-                        <option value="長袖棉T">長袖棉T</option>
-                        <option value="帆布袋">帆布袋</option>
-                        <option value="帆布側背小袋">帆布側背小袋</option>
-                        <option value="帽子">帽子</option>
+                        <option value="棉質短T">棉質短T</option><option value="重磅短T">重磅短T</option><option value="排汗短T">排汗短T</option><option value="其他短T">其他短T</option><option value="短袖POLO衫">短袖POLO衫</option><option value="長袖POLO衫">長袖POLO衫</option><option value="大學T">大學T</option><option value="帽T">帽T</option><option value="長袖棉T">長袖棉T</option><option value="帆布袋">帆布袋</option><option value="帆布側背小袋">帆布側背小袋</option><option value="帽子">帽子</option>
                     </select>
                 </div>
-
                 <div>
-                    <label class="text-[10px] font-bold text-slate-400">顏色</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">顏色</label>
                     <input id="inColor" type="text" placeholder="顏色" class="w-full bg-slate-50 border-0 rounded-xl p-3 outline-none mt-1">
                 </div>
-
                 <div>
-                    <label class="text-[10px] font-bold text-slate-400">尺寸標籤</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">尺寸標籤</label>
                     <select id="inSize" class="w-full bg-slate-50 border-0 rounded-xl p-3 outline-none mt-1">
-                        <optgroup label="兒童版" class="opt-kids">
-                            <option value="90CM">90CM</option>
-                            <option value="100CM">100CM</option>
-                            <option value="110CM">110CM</option>
-                            <option value="120CM">120CM</option>
-                            <option value="130CM">130CM</option>
-                            <option value="140CM">140CM</option>
-                            <option value="150CM">150CM</option>
-                            <option value="160CM">160CM</option>
-                        </optgroup>
-                        <optgroup label="女版" class="opt-women">
-                            <option value="GS">GS</option>
-                            <option value="GM">GM</option>
-                            <option value="GL">GL</option>
-                            <option value="GXL">GXL</option>
-                            <option value="GXXL">GXXL</option>
-                        </optgroup>
-                        <optgroup label="一般款" class="opt-unisex">
-                            <option value="XS">XS</option>
-                            <option value="S">S</option>
-                            <option value="M">M</option>
-                            <option value="L">L</option>
-                            <option value="XL">XL</option>
-                            <option value="2XL">2XL</option>
-                            <option value="3XL">3XL</option>
-                            <option value="4XL">4XL</option>
-                            <option value="5XL">5XL</option>
-                            <option value="7XL">7XL</option>
-                        </optgroup>
-                        <optgroup label="其他尺寸">
-                            <option value="F (One Size)">F (One Size)</option>
-                            <option value="SM">SM</option>
-                            <option value="M">M</option>
-                            <option value="L">L</option>
-                        </optgroup>
+                        <optgroup label="兒童版" class="opt-kids"><option value="90CM">90CM</option><option value="100CM">100CM</option><option value="110CM">110CM</option><option value="120CM">120CM</option><option value="130CM">130CM</option><option value="140CM">140CM</option><option value="150CM">150CM</option><option value="160CM">160CM</option></optgroup>
+                        <optgroup label="女版" class="opt-women"><option value="GS">GS</option><option value="GM">GM</option><option value="GL">GL</option><option value="GXL">GXL</option><option value="GXXL">GXXL</option></optgroup>
+                        <optgroup label="一般款" class="opt-unisex"><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="2XL">2XL</option><option value="3XL">3XL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="7XL">7XL</option></optgroup>
+                        <optgroup label="其他尺寸"><option value="F (One Size)">F (One Size)</option><option value="SM">SM</option><option value="M">M</option><option value="L">L</option></optgroup>
                     </select>
                 </div>
-
                 <div class="col-span-2">
-                    <label class="text-[10px] font-bold text-slate-400">入庫數量</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">入庫數量</label>
                     <input id="inQty" type="number" value="1" class="w-full bg-slate-50 border-0 rounded-xl p-3 outline-none mt-1">
                 </div>
-
-                <div class="flex items-center gap-2 pt-2">
-                    <input type="checkbox" id="isStaple" class="w-5 h-5 accent-indigo-600"> 
-                    <span class="text-sm font-bold text-slate-600">設為黑/白常備款</span>
-                </div>
+                <div class="flex items-center gap-2 pt-2"><input type="checkbox" id="isStaple" class="w-5 h-5 accent-indigo-600 rounded"> <span class="text-sm font-bold text-slate-600">設為黑/白常備款</span></div>
             </div>
             <button onclick="saveToCloud()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold transition active:scale-95">儲存至雲端</button>
             <button onclick="toggleAddModal()" class="w-full mt-2 text-slate-400 text-sm">取消</button>
@@ -198,11 +156,47 @@
             if(confirm('確定移除此庫存？')) remove(ref(db, 'inventory/' + id));
         };
 
+        const createCardHTML = (item) => {
+            // 提醒門檻修改為 3
+            const isLow = item.isStaple && item.qty <= 3;
+            return `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center ${isLow ? 'low-stock-pulse' : ''}">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">${item.brand}</span>
+                            <span class="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">${item.model}</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800">${item.color} · ${item.type}</h3>
+                        <p class="text-xs text-slate-400 font-medium tracking-wide">SIZE: ${item.size}</p>
+                    </div>
+                    <div class="flex items-center bg-slate-50 rounded-xl p-1">
+                        <button onclick="window.changeQty('${item.id}', -1)" class="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm font-bold active:scale-90">-</button>
+                        <span class="px-4 font-mono font-bold text-lg text-center w-12">${item.qty}</span>
+                        <button onclick="window.changeQty('${item.id}', 1)" class="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm font-bold active:scale-90">+</button>
+                    </div>
+                    <button onclick="window.deleteItem('${item.id}')" class="ml-2 text-slate-200 hover:text-rose-300 transition p-2">✕</button>
+                </div>
+            `;
+        };
+
         window.render = function() {
             const container = document.getElementById('inventoryContainer');
-            const filtered = currentBrand === '全部' ? inventory : inventory.filter(i => i.brand === currentBrand);
-            const brands = ['全部', ...new Set(inventory.map(i => i.brand))];
+            const restockContainer = document.getElementById('restockContainer');
+            const restockSection = document.getElementById('restockSection');
             
+            // 補貨提醒邏輯改為 <= 3
+            const lowStaples = inventory.filter(i => i.isStaple && i.qty <= 3);
+            if (lowStaples.length > 0) {
+                restockSection.classList.remove('hidden');
+                restockContainer.innerHTML = lowStaples.map(createCardHTML).join('');
+            } else {
+                restockSection.classList.add('hidden');
+            }
+
+            const filtered = currentBrand === '全部' ? inventory : inventory.filter(i => i.brand === currentBrand);
+            document.getElementById('stockCount').innerText = `${filtered.length} Items`;
+
+            const brands = ['全部', ...new Set(inventory.map(i => i.brand))];
             document.getElementById('brandTabs').innerHTML = brands.map(b => `
                 <button onclick="window.setBrand('${b}')" class="whitespace-nowrap px-6 py-1.5 rounded-xl text-sm font-bold transition ${currentBrand === b ? 'bg-slate-900 text-white shadow-md' : 'bg-white text-slate-400 border border-slate-100'}">${b}</button>
             `).join('');
@@ -210,24 +204,7 @@
             if (filtered.length === 0) {
                 container.innerHTML = `<div class="text-center py-20 text-slate-400">目前沒有庫存。</div>`;
             } else {
-                container.innerHTML = filtered.map(item => `
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center ${item.isStaple && item.qty < 5 ? 'low-stock-pulse' : ''}">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">${item.brand}</span>
-                                <span class="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">${item.model}</span>
-                            </div>
-                            <h3 class="font-bold text-slate-800">${item.color} · ${item.type}</h3>
-                            <p class="text-xs text-slate-400 font-medium tracking-wide">SIZE: ${item.size}</p>
-                        </div>
-                        <div class="flex items-center bg-slate-50 rounded-xl p-1">
-                            <button onclick="window.changeQty('${item.id}', -1)" class="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm font-bold active:scale-90">-</button>
-                            <span class="px-4 font-mono font-bold text-lg text-center w-12">${item.qty}</span>
-                            <button onclick="window.changeQty('${item.id}', 1)" class="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm font-bold active:scale-90">+</button>
-                        </div>
-                        <button onclick="window.deleteItem('${item.id}')" class="ml-2 text-slate-200 hover:text-rose-300 transition p-2">✕</button>
-                    </div>
-                `).join('');
+                container.innerHTML = filtered.map(createCardHTML).join('');
             }
         };
 
