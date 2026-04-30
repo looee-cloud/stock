@@ -6,10 +6,14 @@
     <title>鹿意文創 | 雲端庫存管理系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .low-stock-pulse { animation: pulse 2s infinite; border: 2px solid #ff4d4d; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); } }
+    </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-24 text-slate-800">
 
-    <!-- 頂部導覽列 -->
     <nav class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
@@ -23,16 +27,15 @@
 
     <main class="max-w-4xl mx-auto p-4">
         <div id="inventoryContainer" class="space-y-3">
-            <div class="text-center py-20 text-slate-400">正在連線雲端資料庫...</div>
+            <div id="loadingMsg" class="text-center py-20 text-slate-400">正在連線雲端資料庫...</div>
         </div>
     </main>
 
-    <!-- 新增品項 Modal (保持之前的設計) -->
     <div id="addModal" class="fixed inset-0 bg-slate-900/50 z-40 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6">
             <h2 class="text-lg font-bold mb-4">📦 商品入庫</h2>
             <div class="grid grid-cols-2 gap-4 mb-6">
-                <input id="inBrand" type="text" placeholder="品牌" class="col-span-2 bg-slate-50 border-0 rounded-xl p-3 outline-none">
+                <input id="inBrand" type="text" placeholder="品牌 (如: Gildan)" class="col-span-2 bg-slate-50 border-0 rounded-xl p-3 outline-none">
                 <select id="inType" class="col-span-2 bg-slate-50 border-0 rounded-xl p-3 outline-none">
                     <option value="棉質重磅">棉質重磅</option>
                     <option value="排汗短T">排汗短T</option>
@@ -54,7 +57,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // const firebaseConfig = {
+        // 根據你的截圖 填入的正確金鑰
+        const firebaseConfig = {
             apiKey: "AIzaSyCy_-KebfXkpKNPzDUgAKE2JLHyTEZjzO0",
             authDomain: "looee-stock.firebaseapp.com",
             databaseURL: "https://looee-stock-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -64,15 +68,6 @@
             appId: "1:1068251648781:web:f332fca91c53afdb425644",
             measurementId: "G-BT7ZC0N23R"
         };
-        const firebaseConfig = {
-            apiKey: "貼上你的內容",
-            authDomain: "貼上你的內容",
-            databaseURL: "貼上你的內容",
-            projectId: "貼上你的內容",
-            storageBucket: "貼上你的內容",
-            messagingSenderId: "貼上你的內容",
-            appId: "貼上你的內容"
-        };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -81,11 +76,14 @@
         let inventory = [];
         let currentBrand = '全部';
 
-        // 從雲端即時抓取資料
+        // 即時監聽資料庫
         onValue(stockRef, (snapshot) => {
             const data = snapshot.val();
             inventory = data ? Object.values(data) : [];
             render();
+        }, (error) => {
+            console.error(error);
+            document.getElementById('loadingMsg').innerHTML = `<span class="text-rose-500">連線失敗：${error.message}</span><br>請檢查 Firebase 規則。`;
         });
 
         window.saveToCloud = function() {
@@ -100,7 +98,6 @@
                 isStaple: document.getElementById('isStaple').checked
             };
             if(!newItem.brand || !newItem.color) return alert('品牌與顏色必填');
-            
             set(ref(db, 'inventory/' + id), newItem);
             toggleAddModal();
         };
@@ -121,27 +118,30 @@
             const container = document.getElementById('inventoryContainer');
             const filtered = currentBrand === '全部' ? inventory : inventory.filter(i => i.brand === currentBrand);
             
-            // 渲染 Tab
             const brands = ['全部', ...new Set(inventory.map(i => i.brand))];
             document.getElementById('brandTabs').innerHTML = brands.map(b => `
                 <button onclick="window.setBrand('${b}')" class="whitespace-nowrap px-6 py-1.5 rounded-xl text-sm font-bold transition ${currentBrand === b ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border border-slate-100'}">${b}</button>
             `).join('');
 
-            container.innerHTML = filtered.map(item => `
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center">
-                    <div>
-                        <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">${item.brand}</span>
-                        <h3 class="font-bold text-slate-800">${item.color} · ${item.type}</h3>
-                        <p class="text-xs text-slate-400 font-medium">SIZE: ${item.size}</p>
+            if (filtered.length === 0 && currentBrand === '全部') {
+                container.innerHTML = `<div class="text-center py-20 text-slate-400">目前沒有庫存，點擊上方新增入庫。</div>`;
+            } else {
+                container.innerHTML = filtered.map(item => `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center ${item.isStaple && item.qty < 5 ? 'low-stock-pulse' : ''}">
+                        <div>
+                            <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">${item.brand}</span>
+                            <h3 class="font-bold text-slate-800">${item.color} · ${item.type}</h3>
+                            <p class="text-xs text-slate-400 font-medium">SIZE: ${item.size}</p>
+                        </div>
+                        <div class="flex items-center bg-slate-50 rounded-xl p-1">
+                            <button onclick="window.changeQty('${item.id}', -1)" class="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm font-bold">-</button>
+                            <span class="px-4 font-mono font-bold text-lg">${item.qty}</span>
+                            <button onclick="window.changeQty('${item.id}', 1)" class="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm font-bold">+</button>
+                        </div>
+                        <button onclick="window.deleteItem('${item.id}')" class="ml-2 text-slate-200 hover:text-rose-300">✕</button>
                     </div>
-                    <div class="flex items-center bg-slate-50 rounded-xl p-1">
-                        <button onclick="window.changeQty('${item.id}', -1)" class="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm font-bold">-</button>
-                        <span class="px-4 font-mono font-bold text-lg">${item.qty}</span>
-                        <button onclick="window.changeQty('${item.id}', 1)" class="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm font-bold">+</button>
-                    </div>
-                    <button onclick="window.deleteItem('${item.id}')" class="text-[10px] text-slate-200">✕</button>
-                </div>
-            `).join('');
+                `).join('');
+            }
         };
 
         window.setBrand = (b) => { currentBrand = b; render(); };
