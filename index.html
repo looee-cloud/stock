@@ -157,31 +157,30 @@
             if(confirm('確定移除此庫存？')) remove(ref(db, 'inventory/' + id));
         };
 
-        // --- 視覺重點調整區 ---
         const createCardHTML = (item) => {
             const isLow = item.isStaple && item.qty <= 3;
             return `
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center ${isLow ? 'low-stock-pulse' : ''}">
                     <div class="flex-1 pr-2">
-                        <!-- 品牌與型號：放大 -->
+                        <!-- 品牌與型號：顯眼的大字 -->
                         <div class="flex flex-wrap items-baseline gap-x-2 mb-1">
-                            <span class="text-base font-black text-indigo-700 uppercase tracking-wide">${item.brand}</span>
-                            <span class="text-sm font-bold text-slate-500 font-mono">${item.model}</span>
+                            <span class="text-xl font-[900] text-indigo-700 uppercase tracking-wide">${item.brand}</span>
+                            <span class="text-base font-bold text-slate-500 font-mono">${item.model}</span>
                         </div>
                         
-                        <!-- 顏色與品項分類：品項分類縮小 -->
-                        <div class="flex items-center gap-2">
-                            <h3 class="font-bold text-slate-800 text-lg">${item.color}</h3>
-                            <span class="text-[10px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded font-medium">${item.type}</span>
+                        <!-- 顏色與品項分類：品項分類調大至 text-sm 並加強背景 -->
+                        <div class="flex flex-wrap items-center gap-2 mt-1">
+                            <h3 class="font-bold text-slate-800 text-xl">${item.color}</h3>
+                            <span class="text-sm bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg font-black border border-indigo-100">${item.type}</span>
                         </div>
                         
-                        <p class="text-xs text-slate-400 font-bold tracking-tighter mt-1">SIZE: ${item.size}</p>
+                        <p class="text-xs text-slate-400 font-bold tracking-tighter mt-1.5">SIZE: ${item.size}</p>
                     </div>
 
                     <div class="flex items-center bg-slate-50 rounded-xl p-1">
-                        <button onclick="window.changeQty('${item.id}', -1)" class="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm font-bold active:scale-90 text-xl">-</button>
-                        <span class="px-3 font-mono font-bold text-xl text-center w-12">${item.qty}</span>
-                        <button onclick="window.changeQty('${item.id}', 1)" class="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm font-bold active:scale-90 text-xl">+</button>
+                        <button onclick="window.changeQty('${item.id}', -1)" class="w-10 h-10 flex items-center justify-center bg-white border rounded-lg shadow-sm font-bold active:scale-90 text-2xl">-</button>
+                        <span class="px-3 font-mono font-bold text-2xl text-center w-14">${item.qty}</span>
+                        <button onclick="window.changeQty('${item.id}', 1)" class="w-10 h-10 flex items-center justify-center bg-white border rounded-lg shadow-sm font-bold active:scale-90 text-2xl">+</button>
                     </div>
                     <button onclick="window.deleteItem('${item.id}')" class="ml-2 text-slate-200 hover:text-rose-400 transition p-2">✕</button>
                 </div>
