@@ -62,7 +62,16 @@
                 <div class="col-span-2">
                     <label class="text-[10px] font-bold text-slate-400 uppercase">品牌標籤</label>
                     <select id="inBrand" class="w-full bg-slate-50 border-0 rounded-xl p-3 outline-none mt-1">
-                        <option value="Gildan">Gildan</option><option value="Printstar">Printstar</option><option value="United Athle">United Athle</option><option value="Champion">Champion</option><option value="Arrive Guide">Arrive Guide</option><option value="SORONA">SORONA</option><option value="Uatra Apparel">Uatra Apparel</option><option value="North Harbour">North Harbour</option><option value="POLONE1">POLONE1</option><option value="Top Hoodie">Top Hoodie</option>
+                        <option value="Gildan">Gildan</option>
+                        <option value="Printstar">Printstar</option>
+                        <option value="United Athle">United Athle</option>
+                        <option value="Champion">Champion</option>
+                        <option value="Arrive Guide">Arrive Guide</option>
+                        <option value="SORONA">SORONA</option>
+                        <option value="Uatra Apparel">Uatra Apparel</option>
+                        <option value="North Harbour">North Harbour</option>
+                        <option value="POLONE1">POLONE1</option>
+                        <option value="Top Hoodie">Top Hoodie</option>
                     </select>
                 </div>
                 <div class="col-span-2">
@@ -162,13 +171,11 @@
             return `
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center ${isLow ? 'low-stock-pulse' : ''}">
                     <div class="flex-1 pr-2">
-                        <!-- 品牌與型號：顯眼的大字 -->
                         <div class="flex flex-wrap items-baseline gap-x-2 mb-1">
                             <span class="text-xl font-[900] text-indigo-700 uppercase tracking-wide">${item.brand}</span>
                             <span class="text-base font-bold text-slate-500 font-mono">${item.model}</span>
                         </div>
                         
-                        <!-- 顏色與品項分類：品項分類調大至 text-sm 並加強背景 -->
                         <div class="flex flex-wrap items-center gap-2 mt-1">
                             <h3 class="font-bold text-slate-800 text-xl">${item.color}</h3>
                             <span class="text-sm bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg font-black border border-indigo-100">${item.type}</span>
@@ -203,6 +210,7 @@
             const filtered = currentBrand === '全部' ? inventory : inventory.filter(i => i.brand === currentBrand);
             document.getElementById('stockCount').innerText = `${filtered.length} Items`;
 
+            // 這裡會自動抓取已經存入的品牌名稱，只要存入時是正確的大小寫，這裡顯示就會是正確的
             const brands = ['全部', ...new Set(inventory.map(i => i.brand))];
             document.getElementById('brandTabs').innerHTML = brands.map(b => `
                 <button onclick="window.setBrand('${b}')" class="whitespace-nowrap px-6 py-1.5 rounded-xl text-sm font-bold transition ${currentBrand === b ? 'bg-slate-900 text-white shadow-md' : 'bg-white text-slate-400 border border-slate-100'}">${b}</button>
