@@ -136,11 +136,34 @@
             render();
         });
 
+        // --- 規範化品牌對應表（ desiredForm ），確保 SORONA 和 POLONE1 保持全大寫 ---
+        const BRAND_MAP = {
+            'GILDAN': 'Gildan',
+            'PRINTSTAR': 'Printstar',
+            'UNITED ATHLE': 'United Athle',
+            'CHAMPION': 'Champion',
+            'ARRIVE GUIDE': 'Arrive Guide',
+            'SORONA': 'SORONA',
+            'UATRA APPAREL': 'Uatra Apparel',
+            'NORTH HARBOUR': 'North Harbour',
+            'POLONE1': 'POLONE1',
+            'TOP HOODIE': 'Top Hoodie'
+        };
+
+        const normalizeBrand = (brandName) => {
+            if (typeof brandName !== 'string') return brandName;
+            const key = brandName.toUpperCase();
+            return BRAND_MAP[key] || brandName; // 如果不在清單中，按原樣返回（兼容其他品牌）
+        };
+
         window.saveToCloud = function() {
             const id = Date.now().toString();
+            // 獲取格式化的值（Modal中正確的大小寫）
+            const originalBrand = document.getElementById('inBrand').value;
+
             const newItem = {
                 id,
-                brand: document.getElementById('inBrand').value,
+                brand: originalBrand, // 保存原始值，Modal已經是格式化的，但舊數據庫可能有大寫。
                 model: document.getElementById('inModel').value.trim() || "無型號",
                 type: document.getElementById('inType').value,
                 color: document.getElementById('inColor').value.trim() || "未指定顏色",
@@ -166,13 +189,19 @@
             if(confirm('確定移除此庫存？')) remove(ref(db, 'inventory/' + id));
         };
 
+        // --- 修復卡片呈現，刪除 uppercase Culprit ---
         const createCardHTML = (item) => {
             const isLow = item.isStaple && item.qty <= 3;
+            
+            // 在呈現時手動規範化品牌
+            const displayName = normalizeBrand(item.brand);
+
             return `
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center ${isLow ? 'low-stock-pulse' : ''}">
                     <div class="flex-1 pr-2">
                         <div class="flex flex-wrap items-baseline gap-x-2 mb-1">
-                            <span class="text-xl font-[900] text-indigo-700 uppercase tracking-wide">${item.brand}</span>
+                            <!-- 核心修復：刪除 uppercase，使用 displayName -->
+                            <span class="text-xl font-[900] text-indigo-700 tracking-wide">${displayName}</span>
                             <span class="text-base font-bold text-slate-500 font-mono">${item.model}</span>
                         </div>
                         
@@ -194,6 +223,7 @@
             `;
         };
 
+        // --- 修復篩選功能，與呈现大小寫一致 ---
         window.render = function() {
             const container = document.getElementById('inventoryContainer');
             const restockContainer = document.getElementById('restockContainer');
@@ -207,11 +237,12 @@
                 restockSection.classList.add('hidden');
             }
 
-            const filtered = currentBrand === '全部' ? inventory : inventory.filter(i => i.brand === currentBrand);
+            // 更新篩選邏輯：在篩選時規範化 brand 名稱，以便匹配當前選擇
+            const filtered = currentBrand === '全部' ? inventory : inventory.filter(i => normalizeBrand(i.brand) === currentBrand);
             document.getElementById('stockCount').innerText = `${filtered.length} Items`;
 
-            // 這裡會自動抓取已經存入的品牌名稱，只要存入時是正確的大小寫，這裡顯示就會是正確的
-            const brands = ['全部', ...new Set(inventory.map(i => i.brand))];
+            // 更新品牌標籤清單：在生成清單時規範化 brand 名稱，以便按鈕顯示正確且篩選匹配
+            const brands = ['全部', ...new Set(inventory.map(i => normalizeBrand(i.brand)))];
             document.getElementById('brandTabs').innerHTML = brands.map(b => `
                 <button onclick="window.setBrand('${b}')" class="whitespace-nowrap px-6 py-1.5 rounded-xl text-sm font-bold transition ${currentBrand === b ? 'bg-slate-900 text-white shadow-md' : 'bg-white text-slate-400 border border-slate-100'}">${b}</button>
             `).join('');
